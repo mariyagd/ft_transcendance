@@ -39,7 +39,7 @@ RUN chmod +x init.sh \
              wait-for-it.sh
 
 RUN apt-get update && \
-    apt-get upgrade && \
+    apt-get upgrade -y && \
     apt-get install -y python3 \
                    python3-pip \
                    # for postgres test use: psql -h postgres -U your_username -d your_database -W
