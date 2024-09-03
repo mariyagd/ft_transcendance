@@ -18,7 +18,7 @@ from distutils.util import strtobool
 from django.conf import settings
 from django.conf.global_settings import AUTH_USER_MODEL
 
-# CUSTOMISATION ---------------------------------------------------------------
+# CUSTOMISATION --------------------------------------------------------------------------------------------------------
 
 # LOGLVL environment variable is set in .env file to change the log level
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -35,7 +35,7 @@ def get_docker_secret(key, default):
         logging.critical(f"Secret file {value} not found")
     return value
 
-# -----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -259,20 +259,19 @@ STORAGES = {
         'OPTIONS': {
             'location': MEDIA_ROOT,
         },
-    },
-    #'staticfiles': {
-    #    'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-    #},
+    }
 }
 
 DATETIME_FORMAT = '%d %b %Y %H:%M:%S'
 
 
-#SECURE_SSL_REDIRECT = True  # Redirige toutes les requêtes HTTP vers HTTPS
-#SECURE_HSTS_SECONDS = 3600  # Active HSTS (HTTP Strict Transport Security)
-#SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applique HSTS aux sous-domaines
-#SECURE_HSTS_PRELOAD = True  # Autorise le préchargement HSTS dans les navigateurs
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Si vous utilisez un proxy inverse
-#
-#SESSION_COOKIE_SECURE = True
-#CSRF_COOKIE_SECURE = True
+# source: https://docs.djangoproject.com/fr/5.1/topics/security/
+
+SECURE_SSL_REDIRECT = True  # Redirige toutes les requêtes HTTP vers HTTPS
+SECURE_HSTS_SECONDS = 3600  # Active HSTS (HTTP Strict Transport Security)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applique HSTS aux sous-domaines
+SECURE_HSTS_PRELOAD = True  # Autorise le préchargement HSTS dans les navigateurs
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Si vous utilisez un proxy inverse
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

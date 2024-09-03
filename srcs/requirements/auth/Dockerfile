@@ -25,6 +25,7 @@ COPY requirements.txt ./
 COPY pong_site/ ./
 COPY conf/gunicorn.conf.py ./
 COPY scripts/init.sh ./
+COPY scripts/generate_certs.sh ./
 COPY scripts/wait-for-it.sh ./
 
 # Create group and user, adjust ownership
@@ -36,7 +37,8 @@ RUN useradd $USERNAME &&  \
                                   /usr/src/app
 
 RUN chmod +x init.sh \
-             wait-for-it.sh
+             wait-for-it.sh \
+             generate_certs.sh
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -48,6 +50,8 @@ RUN apt-get update && \
                    iputils-ping \
                    # for api test
                    curl
+
+RUN sh generate_certs.sh
 
 USER $USERNAME
 
