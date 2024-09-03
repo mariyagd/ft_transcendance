@@ -22,10 +22,12 @@ echo "Initializing the database"
   export PGPASSWORD
 
   # for debugging
+if [ "LOG_LEVEL" = "DEBUG" ]; then
   echo "POSTGRES_USER: $POSTGRES_USER"
   echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
   echo "POSTGRES_DB: $POSTGRES_DB"
   echo "PGPASSWORD: $PGPASSWORD"
+fi
 
   # initdb creates a new PostgreSQL database cluster.
   # --pwfile=filename: initdb read the database superuser's password from a file.

@@ -1,15 +1,17 @@
-from rest_framework import generics
-from django.contrib.auth.models import update_last_login
+from rest_framework import (
+    generics,
+    status
+)
+from .serializers import (
+    RegisterSerializer,
+    UserProfileSerializer,
+    ChangePasswordSerializer,
+)
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken, SlidingToken
-
-from .serializers import RegisterSerializer, UserProfileSerializer, ChangePasswordSerializer, UserLoginSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.password_validation import validate_password, password_changed
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.password_validation import password_changed
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -22,32 +24,6 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
     queryset = User.objects.all()
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-class UserLoginView(APIView):
-    http_method_names = ['post']
-    serializer_class = UserLoginSerializer
-    permission_classes = [AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True) # sends HTTP 400 if not valid
-        user = serializer.validated_data
-
-        # update last login
-        update_last_login(None, user)
-        if not user.is_active:
-            user.is_active = True
-            user.save()
-
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-
-        return Response({
-            'refresh': str(refresh),
-            'access': str(access),
-        }, status=status.HTTP_200_OK)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # UserProfileView: PUT, PATCH, GET requests because RetrieveUpdateDestroyAPIView is used
@@ -89,3 +65,4 @@ class ChangePasswordView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #-----------------------------------------------------------------------------------------------------------------------
+

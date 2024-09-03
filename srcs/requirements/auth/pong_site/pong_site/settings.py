@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 import logging      # for custom logs messages
 from datetime import timedelta # for jwt
-
+from distutils.util import strtobool
 from django.conf import settings
 from django.conf.global_settings import AUTH_USER_MODEL
 
@@ -22,20 +22,7 @@ from django.conf.global_settings import AUTH_USER_MODEL
 
 # LOGLVL environment variable is set in .env file to change the log level
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-
-# Python dictionary: Mapping log levels
-log_levels = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL
-}
-
-# For custom logs messages when using docker-compose logs
-# if the log level is not in the dictionary, the default level is INFO
-logging.basicConfig(level=log_levels.get(LOG_LEVEL, logging.INFO))
-
+logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 # Function to get the value of a secret from a file
@@ -60,8 +47,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = get_docker_secret("AUTH_SECRET_KEY_FILE", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG")
-logger.debug(f'Debug mode is {DEBUG}')
+DEBUG = bool(strtobool(os.getenv('DEBUG', 'True')))
+logger.info(f'Debug mode is {DEBUG}')
 
 ALLOWED_HOSTS = [ os.getenv("DOMAIN_NAME"), '127.0.0.1', 'localhost' ]
 
@@ -91,8 +78,9 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.AllowAllUsersModelBackend',  # Permet à tous les utilisateurs de s'authentifier, même inactifs
-    'django.contrib.auth.backends.ModelBackend',  # Backend par défaut
+    'django.contrib.auth.backends.AllowAllUsersModelBackend',  # Allow all users to authenticate
+    'pong_app.authentication.MyCustomModelBackend',
+#    'django.contrib.auth.backends.ModelBackend',  # default ModelBackend
 ]
 
 SIMPLE_JWT = {
@@ -100,7 +88,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
+    'UPDATE_LAST_LOGIN': True,
 
     "ALGORITHM": "HS256",
     "SIGNING_KEY": settings.SECRET_KEY,
@@ -115,7 +103,8 @@ SIMPLE_JWT = {
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    'USER_AUTHENTICATION_RULE': "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    #'USER_AUTHENTICATION_RULE': "rest_framework_simplejwt.authentication.default_user_authentication_rule", # default behaviour: inactif account's can't login
+    'USER_AUTHENTICATION_RULE': "pong_app.authentication.custom_user_authentication_rule", # custom behaviour: inactif account's can login
 
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     "TOKEN_TYPE_CLAIM": "token_type",
@@ -123,11 +112,12 @@ SIMPLE_JWT = {
 
     "JTI_CLAIM": "jti",
 
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    #"SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    #"SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    #'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 
-    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    #"TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer", # default
+    "TOKEN_OBTAIN_SERIALIZER": "pong_app.serializers.MyCustomTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -170,31 +160,13 @@ WSGI_APPLICATION = 'pong_site.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'pong',  # Nom de la base de données
-#        'USER': 'pong',
-#        'PASSWORD': 'pong',
-#        'HOST': 'postgres',
-#        'PORT': 5432,
-#    }
-#}
-
 PGNAME = get_docker_secret(key="POSTGRES_DB_NAME_FILE", default="")
 PGUSER = get_docker_secret(key="POSTGRES_USER_FILE", default="")
 PGPASS = get_docker_secret(key="POSTGRES_PASSWORD_FILE", default="")
 
-#logger.debug(f'PGNAME: {PGNAME}')
-#logger.debug(f'PGUSER: {PGUSER}')
-#logger.debug(f'PGPASS: {PGPASS}')
+logger.debug(f'PGNAME: {PGNAME}')
+logger.debug(f'PGUSER: {PGUSER}')
+logger.debug(f'PGPASS: {PGPASS}')
 
 DATABASES = {
     'default': {
@@ -269,14 +241,7 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-STORAGES = {
-    # ...
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -295,20 +260,19 @@ STORAGES = {
             'location': MEDIA_ROOT,
         },
     },
-    'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-    },
+    #'staticfiles': {
+    #    'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    #},
 }
 
 DATETIME_FORMAT = '%d %b %Y %H:%M:%S'
 
-
-
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-#SECURE_SSL_REDIRECT = True  # Rediriger tout le trafic HTTP vers HTTPS (géré par Nginx)
 
 #SECURE_SSL_REDIRECT = True  # Redirige toutes les requêtes HTTP vers HTTPS
 #SECURE_HSTS_SECONDS = 3600  # Active HSTS (HTTP Strict Transport Security)
 #SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applique HSTS aux sous-domaines
 #SECURE_HSTS_PRELOAD = True  # Autorise le préchargement HSTS dans les navigateurs
 #SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Si vous utilisez un proxy inverse
+#
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True

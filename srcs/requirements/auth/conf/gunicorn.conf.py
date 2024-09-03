@@ -1,6 +1,6 @@
 errorlog = "/logs/error.log"
 loglevel = "debug"
-accesslog = "/logs/access.log"
+accesslog = "/logs/access.log" # register all HTTP requests and responses
 workers = 1
 bind = "0.0.0.0:8000"
 #keyfile = "/etc/ssl/certs/pong_site.key"

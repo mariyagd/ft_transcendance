@@ -7,12 +7,12 @@ OWNER=$(stat -c "%U" /usr/src/app/media)
 GROUP=$(stat -c "%G" /usr/src/app/media)
 
 if [ "$OWNER" != "$USERNAME" ] || [ "$GROUP" != "$GROUPNAME" ]; then
-    echo "$current_date_time Changing the owner and the group of /usr/src/app/media to $USERNAME and $GROUPNAME"
+    echo "Changing the owner and the group of /usr/src/app/media to $USERNAME and $GROUPNAME"
     chown -R "$USERNAME":"$GROUPNAME" /usr/src/app/media
 fi
 
 if [ "$PERMISSIONS" -ne 755 ]; then
-    echo "$current_date_time Changing the permissions of /usr/src/app/media to 755"
+    echo "Changing the permissions of /usr/src/app/media to 755"
     chmod -R 755 /usr/src/app/media
 fi
 
@@ -31,8 +31,15 @@ export DJANGO_SUPERUSER_EMAIL
 # create tables from models
 python3 manage.py makemigrations pong_app
 
+echo "LOG_LEVEL is set to $LOG_LEVEL"
+
+if [ "$LOG_LEVEL" = "DEBUG" ]; then
+    echo "executing python3 manage.py sqlmigrate pong_app 0001"
+    python3 manage.py sqlmigrate pong_app 0001
+fi
+
 # check migrations
-python3 manage.py sqlmigrate pong_app 0001
+#python3 manage.py sqlmigrate pong_app 0001
 
 # save migrations to db
 python3 manage.py migrate
@@ -46,8 +53,6 @@ python3 manage.py createsuperuser --noinput \
                                   --username $DJANGO_SUPERUSER_USERNAME \
                                   --first_name $DJANGO_SUPERUSER_FIRST_NAME \
                                   --last_name $DJANGO_SUPERUSER_LAST_NAME \
-
-#python3 manage.py showmigrations
 
 # declare the superuser's password
 python3 manage.py shell << END

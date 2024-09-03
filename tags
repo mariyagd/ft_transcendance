@@ -13039,6 +13039,7 @@ checkSubMap	venv/lib/python3.11/site-packages/pkg_resources/tests/test_resources
 check_against_chunks	venv/lib/python3.11/site-packages/pip/_internal/utils/hashes.py	/^    def check_against_chunks(self, chunks: Iterable[bytes]) -> None:$/;"	m	class:Hashes
 check_against_file	venv/lib/python3.11/site-packages/pip/_internal/utils/hashes.py	/^    def check_against_file(self, file: BinaryIO) -> None:$/;"	m	class:Hashes
 check_against_path	venv/lib/python3.11/site-packages/pip/_internal/utils/hashes.py	/^    def check_against_path(self, path: str) -> None:$/;"	m	class:Hashes
+check_and_install	docker-rootless-mode.sh	/^check_and_install() {$/;"	f
 check_archive_formats	venv/lib/python3.11/site-packages/setuptools/_distutils/archive_util.py	/^def check_archive_formats(formats):$/;"	f
 check_argument_types	venv/lib/python3.11/site-packages/setuptools/_vendor/typeguard/_functions.py	/^def check_argument_types($/;"	f
 check_bidi	venv/lib/python3.11/site-packages/pip/_vendor/idna/core.py	/^def check_bidi(label: str, check_ltr: bool = False) -> bool:$/;"	f
@@ -13161,6 +13162,7 @@ checker_lookup_functions	venv/lib/python3.11/site-packages/setuptools/_vendor/ty
 checking_metadata	venv/lib/python3.11/site-packages/setuptools/_distutils/command/sdist.py	/^    def checking_metadata(self):$/;"	m	class:sdist
 checkpat	venv/lib/python3.11/site-packages/setuptools/_vendor/inflect/__init__.py	/^    def checkpat(self, pattern: Optional[Word]) -> None:$/;"	m	class:engine
 checkpatplural	venv/lib/python3.11/site-packages/setuptools/_vendor/inflect/__init__.py	/^    def checkpatplural(self, pattern: Optional[Word]) -> None:$/;"	m	class:engine
+checks	docker-rootless.sh	/^checks() {$/;"	f
 children	venv/lib/python3.11/site-packages/pip/_vendor/rich/layout.py	/^    def children(self) -> List["Layout"]:$/;"	m	class:Layout
 children	venv/lib/python3.11/site-packages/setuptools/_vendor/importlib_metadata/__init__.py	/^    def children(self):$/;"	m	class:FastPath
 children	venv/lib/python3.11/site-packages/setuptools/_vendor/importlib_resources/simple.py	/^    def children(self) -> List['SimpleReader']:$/;"	m	class:SimpleReader
@@ -14403,6 +14405,7 @@ do_egg_install	venv/lib/python3.11/site-packages/setuptools/command/install.py	/
 do_handshake	venv/lib/python3.11/site-packages/pip/_vendor/truststore/_api.py	/^            def do_handshake(self) -> None:$/;"	m	class:SSLContext.__init__.TruststoreSSLObject
 do_insertions	venv/lib/python3.11/site-packages/pip/_vendor/pygments/formatters/latex.py	/^from pip._vendor.pygments.lexer import Lexer, do_insertions$/;"	i
 do_insertions	venv/lib/python3.11/site-packages/pip/_vendor/pygments/lexer.py	/^def do_insertions(insertions, tokens):$/;"	f
+do_install	docker-rootless.sh	/^do_install() {$/;"	f
 do_install_data	venv/lib/python3.11/site-packages/setuptools/command/bdist_egg.py	/^    def do_install_data(self):$/;"	m	class:bdist_egg
 do_override	venv/lib/python3.11/site-packages/_distutils_hack/__init__.py	/^def do_override():$/;"	f
 do_poll	venv/lib/python3.11/site-packages/pip/_vendor/urllib3/util/wait.py	/^    def do_poll(t):$/;"	f	function:poll_wait_for_socket
@@ -14809,6 +14812,7 @@ exec_module	venv/lib/python3.11/site-packages/_distutils_hack/__init__.py	/^    
 exec_module	venv/lib/python3.11/site-packages/_virtualenv.py	/^    def exec_module(old, module):$/;"	m	class:_Finder
 exec_module	venv/lib/python3.11/site-packages/pip/_vendor/urllib3/packages/six.py	/^    def exec_module(self, module):$/;"	m	class:_SixMetaPathImporter
 exec_module	venv/lib/python3.11/site-packages/setuptools/_vendor/typeguard/_importhook.py	/^    def exec_module(self, module: ModuleType) -> None:$/;"	m	class:TypeguardLoader
+exec_setuptool	docker-rootless.sh	/^exec_setuptool() {$/;"	f
 executable	venv/lib/python3.11/site-packages/pip/_vendor/distlib/scripts.py	/^    executable = None  # for shebangs$/;"	v	class:ScriptMaker
 executable_filename	venv/lib/python3.11/site-packages/setuptools/_distutils/ccompiler.py	/^    def executable_filename(self, basename, strip_dir=False, output_dir=''):$/;"	m	class:CCompiler
 executables	venv/lib/python3.11/site-packages/setuptools/_distutils/_msvccompiler.py	/^    executables = {}$/;"	v	class:MSVCCompiler
@@ -17043,6 +17047,7 @@ init_logging	venv/lib/python3.11/site-packages/pip/_internal/utils/_log.py	/^def
 init_per_thread_state	venv/lib/python3.11/site-packages/pip/_vendor/requests/auth.py	/^    def init_per_thread_state(self):$/;"	m	class:HTTPDigestAuth
 init_poolmanager	venv/lib/python3.11/site-packages/pip/_internal/network/session.py	/^    def init_poolmanager($/;"	m	class:_SSLContextAdapterMixin
 init_poolmanager	venv/lib/python3.11/site-packages/pip/_vendor/requests/adapters.py	/^    def init_poolmanager($/;"	m	class:HTTPAdapter
+init_vars	docker-rootless.sh	/^init_vars() {$/;"	f
 initialise	venv/lib/python3.11/site-packages/pip/_vendor/pygments/cmdline.py	/^            import colorama.initialise$/;"	i
 initialize	venv/lib/python3.11/site-packages/setuptools/_distutils/_msvccompiler.py	/^    def initialize(self, plat_name=None):$/;"	m	class:MSVCCompiler
 initialize	venv/lib/python3.11/site-packages/setuptools/_distutils/msvc9compiler.py	/^    def initialize(self, plat_name=None):  # noqa: C901$/;"	m	class:MSVCCompiler

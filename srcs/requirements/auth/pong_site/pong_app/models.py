@@ -22,3 +22,4 @@ class User(AbstractUser):
     # 'USERNAME_FIELD' for a custom user model must not be included in 'REQUIRED_FIELDS'
     # This means that email should not be included in REQUIRED_FIELDS
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+

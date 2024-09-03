@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .validators import validate_password_match
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 #-----------------------------------------------------------------------------------------------------------------------
 # RegisterSerializer: crée un utilisateur à partir des données d'inscription fournies.
@@ -49,18 +49,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-#-----------------------------------------------------------------------------------------------------------------------
-class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True, write_only=True)
-    password = serializers.CharField(required=True, write_only=True)
+#------------------------------------------------------------------------------------------------------------------
+class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user) # generate token
 
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-        user = authenticate(email=email, password=password)
-        if not user:
-            raise serializers.ValidationError("Invalid credentials.")
-        return user
+        # Add custom claims
+        token['username'] = user.username
+        token['email'] = user.email
+        # ...
+        return token
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 class UserProfileSerializer(serializers.ModelSerializer):
