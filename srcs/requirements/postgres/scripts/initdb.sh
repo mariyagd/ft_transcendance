@@ -22,22 +22,22 @@ echo "Initializing the database"
   export PGPASSWORD
 
   # for debugging
-if [ "LOG_LEVEL" = "DEBUG" ]; then
   echo "POSTGRES_USER: $POSTGRES_USER"
   echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
   echo "POSTGRES_DB: $POSTGRES_DB"
   echo "PGPASSWORD: $PGPASSWORD"
-fi
 
   # initdb creates a new PostgreSQL database cluster.
   # --pwfile=filename: initdb read the database superuser's password from a file.
   initdb --auth-local=scram-sha-256 --auth-host=scram-sha-256 -D "$PGDATA" --pwfile=/run/secrets/pg_superuser_pass
 
-  #echo "host    all             all             172.18.0.3/32           scram-sha-256" >> /var/lib/postgresql/data/pg_hba.conf
+# get auth container ip address
+DJANGO_CONTAINER_IP=$(getent hosts auth | awk '{ print $1 }')
 
-  # get auth container ip address
-  DJANGO_CONTAINER_IP=$(getent hosts auth | awk '{ print $1 }')
+if [ $LOG_LEVEL = "DEBUG" ]; then
+
   echo "auth ip address is : $DJANGO_CONTAINER_IP"
+fi
 
   # Add auth container ip adress to  pg_hba.conf
   echo "host    all             all             $DJANGO_CONTAINER_IP/32           scram-sha-256" >> /var/lib/postgresql/data/pg_hba.conf

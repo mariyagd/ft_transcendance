@@ -10,15 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from pathlib import Path
 import os
-import logging      # for custom logs messages
+import logging # for custom logs messages
+from pathlib import Path
 from datetime import timedelta # for jwt
-from distutils.util import strtobool
 from django.conf import settings
 from django.conf.global_settings import AUTH_USER_MODEL
 
-# CUSTOMISATION --------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 # LOGLVL environment variable is set in .env file to change the log level
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -35,7 +34,7 @@ def get_docker_secret(key, default):
         logging.critical(f"Secret file {value} not found")
     return value
 
-#-----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,17 +42,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+# ----------------------------------------------------------------------------------------------------------------------
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_docker_secret("AUTH_SECRET_KEY_FILE", "")
 
+# ----------------------------------------------------------------------------------------------------------------------
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(strtobool(os.getenv('DEBUG', 'True')))
-logger.info(f'Debug mode is {DEBUG}')
+#DEBUG = os.getenv("DEBUG")
+if os.getenv("DEBUG") == "True":
+    DEBUG = True
+else:
+    DEBUG = False
+logger.debug(f'Debug mode is {DEBUG}')
 
+# ----------------------------------------------------------------------------------------------------------------------
 ALLOWED_HOSTS = [ os.getenv("DOMAIN_NAME"), '127.0.0.1', 'localhost' ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 # Application definition
-
 INSTALLED_APPS = [
     'pong_app.apps.PongAppConfig',
     'django.contrib.admin',
@@ -67,6 +73,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -77,18 +84,20 @@ REST_FRAMEWORK = {
     ),
 }
 
+# ----------------------------------------------------------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.AllowAllUsersModelBackend',  # Allow all users to authenticate
-    'pong_app.authentication.MyCustomModelBackend',
-#    'django.contrib.auth.backends.ModelBackend',  # default ModelBackend
+    #'pong_app.authentication.MyCustomModelBackend',
+    'django.contrib.auth.backends.AllowAllUsersModelBackend',  # Permet à tous les utilisateurs de s'authentifier, même inactifs
+    'django.contrib.auth.backends.ModelBackend', # Backend par défaut
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
+    'UPDATE_LAST_LOGIN': False,
 
     "ALGORITHM": "HS256",
     "SIGNING_KEY": settings.SECRET_KEY,
@@ -103,7 +112,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    #'USER_AUTHENTICATION_RULE': "rest_framework_simplejwt.authentication.default_user_authentication_rule", # default behaviour: inactif account's can't login
+  #  'USER_AUTHENTICATION_RULE': "rest_framework_simplejwt.authentication.default_user_authentication_rule",
     'USER_AUTHENTICATION_RULE': "pong_app.authentication.custom_user_authentication_rule", # custom behaviour: inactif account's can login
 
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
@@ -112,11 +121,11 @@ SIMPLE_JWT = {
 
     "JTI_CLAIM": "jti",
 
-    #"SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    #"SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
-    #'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 
-    #"TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer", # default
+#    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
     "TOKEN_OBTAIN_SERIALIZER": "pong_app.serializers.MyCustomTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
@@ -126,6 +135,7 @@ SIMPLE_JWT = {
 }
 
 
+# ----------------------------------------------------------------------------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -137,8 +147,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 ROOT_URLCONF = 'pong_site.urls'
 
+# ----------------------------------------------------------------------------------------------------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -155,11 +167,10 @@ TEMPLATES = [
     },
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 WSGI_APPLICATION = 'pong_site.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
+# ----------------------------------------------------------------------------------------------------------------------
 PGNAME = get_docker_secret(key="POSTGRES_DB_NAME_FILE", default="")
 PGUSER = get_docker_secret(key="POSTGRES_USER_FILE", default="")
 PGPASS = get_docker_secret(key="POSTGRES_PASSWORD_FILE", default="")
@@ -179,6 +190,7 @@ DATABASES = {
     }
 }
 
+# ----------------------------------------------------------------------------------------------------------------------
 # Default Password Hasher values
 # Cela signifie que Django utilisera PBKDF2 pour stocker tous les mots de passe,
 # mais qu’il acceptera de vérifier des mots de passe stockés avec les
@@ -192,6 +204,7 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.ScryptPasswordHasher",
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 # Password validation
 # UserAttributeSimilarityValidator, qui vérifie la similitude entre le mot de passe et certains attributs de l’utilisateur.
 # MinimumLengthValidator, qui vérifie la longueur minimale du mot de passe. Ce validateur est configuré avec une option personnalisée : il exige une longueur minimale de 9 caractères, au lieu des 8 par défaut.
@@ -219,8 +232,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'pong_site.validators.CharactersValidator',
     },
+    {
+        'NAME': 'pong_site.validators.CharactersValidator',
+    },
 ]
 
+# ----------------------------------------------------------------------------------------------------------------------
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
@@ -232,23 +249,33 @@ USE_I18N = True
 
 USE_TZ = True
 
+# ----------------------------------------------------------------------------------------------------------------------
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 #pong_app/static/pong_app
 STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-# STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STORAGES = {
+    # ...
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ----------------------------------------------------------------------------------------------------------------------
 # use the Custom User model instead of the default User model
 AUTH_USER_MODEL = 'pong_app.User'
 
 
+# ----------------------------------------------------------------------------------------------------------------------
 # for media serving: images
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -259,19 +286,46 @@ STORAGES = {
         'OPTIONS': {
             'location': MEDIA_ROOT,
         },
-    }
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
 }
 
+# ----------------------------------------------------------------------------------------------------------------------
 DATETIME_FORMAT = '%d %b %Y %H:%M:%S'
 
+#-----------------------------------------------------------------------------------------------------------------------
+# SSL/ HTTPS
+# source: https://docs.djangoproject.com/fr/5.1/topics/security/#ssl-https
+#-----------------------------------------------------------------------------------------------------------------------
+# source: https://docs.djangoproject.com/fr/5.1/ref/settings/#std-setting-SECURE_PROXY_SSL_HEADER
+# It demands three requirements to be set in the nginx configuration file
+#-----------------------------------------------------------------------------------------------------------------------
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# source: https://docs.djangoproject.com/fr/5.1/topics/security/
+#-----------------------------------------------------------------------------------------------------------------------
+# source: https://docs.djangoproject.com/fr/5.1/ref/settings/#std-setting-SECURE_SSL_REDIRECT
+# Default is False. If set to True, all non-HTTPS requests are redirected to HTTPS
+#-----------------------------------------------------------------------------------------------------------------------
+SECURE_SSL_REDIRECT = True
 
-SECURE_SSL_REDIRECT = True  # Redirige toutes les requêtes HTTP vers HTTPS
+#-----------------------------------------------------------------------------------------------------------------------
+# If a browser connects initially via HTTP, which is the default for most browsers, it is possible for existing cookies
+# to be leaked. For this reason, you should set your SESSION_COOKIE_SECURE and CSRF_COOKIE_SECURE settings to True.
+# This instructs the browser to only send these cookies over HTTPS connections. Note that this will mean that sessions
+# will not work over HTTP, and the CSRF protection will prevent any POST data being accepted over HTTP
+# (which will be fine if you are redirecting all HTTP traffic to HTTPS).
+#-----------------------------------------------------------------------------------------------------------------------
+SESSION_COOKIE_SECURE = True # cookie is only sent under an HTTPS connection.
+CSRF_COOKIE_SECURE = True # secure cookie for the CSRF cookie: browsers may ensure that the cookie is only sent with an HTTPS connection.
+
+#-----------------------------------------------------------------------------------------------------------------------
+#  HTTP Strict Transport Security (HSTS)
+# HSTS is an HTTP header that informs a browser that all future connections to a particular site should always use HTTPS.
+# Combined with redirecting requests over HTTP to HTTPS, this will ensure that connections always enjoy the added security
+# of SSL provided one successful connection has occurred.
+#-----------------------------------------------------------------------------------------------------------------------
 SECURE_HSTS_SECONDS = 3600  # Active HSTS (HTTP Strict Transport Security)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applique HSTS aux sous-domaines
 SECURE_HSTS_PRELOAD = True  # Autorise le préchargement HSTS dans les navigateurs
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Si vous utilisez un proxy inverse
-
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True

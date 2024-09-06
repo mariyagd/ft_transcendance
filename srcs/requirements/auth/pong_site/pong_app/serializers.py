@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator
 from .models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .validators import validate_password_match
+from .validators import validate_password_match, file_size_validator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -16,13 +17,24 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField(required=True, allow_blank=False)
     last_name = serializers.CharField(required=True, allow_blank=False)
-    profile_photo = serializers.ImageField(required=False, allow_empty_file=True)
+    profile_photo = serializers.ImageField(
+        required=False,
+        allow_empty_file=True,
+        validators=[
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png']),
+        ]
+    )
     date_joined = serializers.DateTimeField(required=False, read_only=True, format=settings.DATETIME_FORMAT)
     last_login = serializers.DateTimeField(required=False, read_only=True, format=settings.DATETIME_FORMAT)
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login')
+        fields = (
+            'username', 'password', 'password2', 'email',
+            'first_name', 'last_name', 'is_active',
+            'date_joined', 'last_login', 'profile_photo',
+            'image_height', 'image_width'
+        )
 
     def validate(self, attrs):
         validate_password_match(attrs['password'], attrs['password2'])
@@ -53,6 +65,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+            print(f"User {user.username} has been reactivated.")
+
         token = super().get_token(user) # generate token
 
         # Add custom claims
@@ -68,7 +85,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', "is_active", "profile_photo", "date_joined", "last_login"]
+        fields = [
+            'username', 'email', 'first_name', 'last_name',
+            "is_active", "date_joined", "last_login",
+            "profile_photo", "image_height", "image_width"
+        ]
 
 #-----------------------------------------------------------------------------------------------------------------------
 class ChangePasswordSerializer(serializers.Serializer):
@@ -85,4 +106,4 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise ValidationError({"old_password": "The old password is incorrect."})
         return value
-#-----------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------------

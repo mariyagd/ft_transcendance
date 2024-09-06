@@ -26,4 +26,5 @@ class MyCustomModelBackend(ModelBackend):
         if not user.is_active:
             user.is_active = True
             user.save(update_fields=['is_active'])
+            print(f"User {user.username} has been reactivated.")
         return True

@@ -13,20 +13,25 @@ ENV PATH="/home/$USERNAME/.local/bin:$PATH"
 # Specifies the default time zone
 ENV TZ="Europe/Zurich"
 
-# Create folder for pip packages installed as non root user
+# .local/lib  and .local/bin: folders for pip packages installed as non root user:
+# /logs/ : folder for logs configured in gunicorn.conf.py
+# /usr/src/app/ : folder for the django project
+# /usr/src/app/scripts : folder for scripts
 RUN mkdir -p /home/$USERNAME/.local/lib  \
              /home/$USERNAME/.local/bin  \
              /logs \
-             /usr/src/app
+             /usr/src/app/
 
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 COPY pong_site/ ./
 COPY conf/gunicorn.conf.py ./
-COPY scripts/init.sh ./
-COPY scripts/generate_certs.sh ./
-COPY scripts/wait-for-it.sh ./
+COPY scripts/ ./scripts/
+
+RUN chmod +x ./scripts/init.sh \
+             ./scripts/wait-for-it.sh \
+             ./scripts/generate_certs.sh
 
 # Create group and user, adjust ownership
 RUN useradd $USERNAME &&  \
@@ -34,11 +39,7 @@ RUN useradd $USERNAME &&  \
     chown -R $USERNAME:$GROUPNAME /home/$USERNAME/.local/lib  \
                                   /home/$USERNAME/.local/bin  \
                                   /logs  \
-                                  /usr/src/app
-
-RUN chmod +x init.sh \
-             wait-for-it.sh \
-             generate_certs.sh
+                                  /usr/src/app/
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -51,16 +52,17 @@ RUN apt-get update && \
                    # for api test
                    curl
 
-RUN sh generate_certs.sh
+RUN bash ./scripts/generate_certs.sh
+RUN chown $USERNAME:$GROUPNAME /etc/ssl/certs/auth.key \
+                                  /etc/ssl/certs/auth.crt
 
 USER $USERNAME
 
 RUN pip3 install --no-cache-dir -r requirements.txt && \
     gunicorn --version
 
-
 EXPOSE 8000
 
 #CMD ["gunicorn", "-c", "gunicorn.conf.py" , "pong_site.wsgi:application"]
 
-CMD [ "sh", "/usr/src/app/init.sh" ]
+CMD [ "sh", "/usr/src/app/scripts/init.sh" ]
