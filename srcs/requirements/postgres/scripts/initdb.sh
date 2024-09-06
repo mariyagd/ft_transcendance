@@ -37,7 +37,6 @@ echo "Initializing the database"
   DJANGO_CONTAINER_IP=$(getent hosts auth | awk '{ print $1 }')
 
   if [ $LOG_LEVEL = "DEBUG" ]; then
-
     echo "auth ip address is : $DJANGO_CONTAINER_IP"
   fi
 
