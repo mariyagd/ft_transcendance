@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
 ]
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -138,6 +139,7 @@ SIMPLE_JWT = {
 # ----------------------------------------------------------------------------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -146,6 +148,26 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# ----------------------------------------------------------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = [
+    "https://pong.42lausanne.ch",
+    "https://localhost",
+]
+
+CORS_ALLOW_METHODS = (
+    "GET",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ROOT_URLCONF = 'pong_site.urls'
@@ -326,6 +348,9 @@ CSRF_COOKIE_SECURE = True # secure cookie for the CSRF cookie: browsers may ensu
 # Combined with redirecting requests over HTTP to HTTPS, this will ensure that connections always enjoy the added security
 # of SSL provided one successful connection has occurred.
 #-----------------------------------------------------------------------------------------------------------------------
-SECURE_HSTS_SECONDS = 3600  # Active HSTS (HTTP Strict Transport Security)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applique HSTS aux sous-domaines
-SECURE_HSTS_PRELOAD = True  # Autorise le préchargement HSTS dans les navigateurs
+
+X_FRAME_OPTIONS = "DENY"
+SECURE_HSTS_SECONDS = 63072000  # Active HSTS (HTTP Strict Transport Security) for 2 years
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # Applique HSTS aux sous-domaines
+SECURE_HSTS_PRELOAD = False  # Autorise le préchargement HSTS dans les navigateurs
+SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -22,6 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         allow_empty_file=True,
         validators=[
             FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png']),
+            file_size_validator
         ]
     )
     date_joined = serializers.DateTimeField(required=False, read_only=True, format=settings.DATETIME_FORMAT)
@@ -77,7 +78,6 @@ class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         # ...
         return token
-
 
 #-----------------------------------------------------------------------------------------------------------------------
 class UserProfileSerializer(serializers.ModelSerializer):

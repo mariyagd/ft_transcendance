@@ -23,6 +23,10 @@
   # stat -c "%G" file-or-folder -> see the group
   # stat -c "%a" file-or-folder -> see the permissions (e.g. 755)
 
+if [ "$LOG_LEVEL" = "DEBUG" ]; then
+  cat /etc/nginx/nginx.conf.gixy
+fi
+
 function set_ownership_permissions() {
 
   PERMISSIONS=$(stat -c "%a" "$1")

@@ -6,7 +6,9 @@ RUN apt-get update && \
     apt-get install -y \
       nginx \
       openssl \
-      gettext
+      gettext \
+      python3 \
+      python3-pip
 
 COPY scripts/entrypoint.sh /
 COPY conf/nginx.conf /etc/nginx/nginx.conf.template
@@ -15,6 +17,10 @@ COPY scripts/generate_certs.sh /etc/nginx/certs/generate_certs.sh
 RUN chmod +x ./entrypoint.sh \
               /etc/nginx/certs/generate_certs.sh && \
     sh /etc/nginx/certs/generate_certs.sh
+
+RUN pip3 install gixy==0.1.20 pyparsing==2.4.7
+
+RUN gixy /etc/nginx/nginx.conf --format=text --output=/etc/nginx/nginx.conf.gixy
 
 # Expose ports for HTTP and HTTPS
 EXPOSE 80
