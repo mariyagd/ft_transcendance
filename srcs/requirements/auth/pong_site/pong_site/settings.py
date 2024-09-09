@@ -56,8 +56,11 @@ else:
 logger.debug(f'Debug mode is {DEBUG}')
 
 # ----------------------------------------------------------------------------------------------------------------------
-ALLOWED_HOSTS = [ os.getenv("DOMAIN_NAME"), '127.0.0.1', 'localhost' ]
-
+ALLOWED_HOSTS = [
+    os.getenv("DOMAIN_NAME", "default-domain.com"),
+    '127.0.0.1',
+    'localhost',
+]
 # ----------------------------------------------------------------------------------------------------------------------
 # Application definition
 INSTALLED_APPS = [
@@ -154,9 +157,6 @@ CORS_ALLOWED_ORIGINS = [
     'https://pong.42lausanne.ch',
     'https://localhost',
     'https://127.0.0.1',
-    'https://pong.42lausanne.ch:3000',
-    'https://localhost:3000',
-    'https://127.0.0.1:3000'
 ]
 
 CORS_ALLOW_METHODS = (
@@ -167,11 +167,13 @@ CORS_ALLOW_METHODS = (
 )
 
 CORS_ALLOW_HEADERS = (
-    'accept',
-    'authorization',
-    'content-type',
+    'Accept',
+    'Authorization',
+    'Content-Type',
     'user-agent',
 )
+
+CORS_ALLOW_CREDENTIALS = True
 
 # ----------------------------------------------------------------------------------------------------------------------
 ROOT_URLCONF = 'pong_site.urls'

@@ -1,93 +1,38 @@
-// Inscription
-document.getElementById("register_form").addEventListener("submit", function(event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registrationForm');
 
-    const username = document.getElementById("username").value;
-    const email = document.getElementById("email").value;
-    const first_name = document.getElementById("first_name").value;
-    const last_name = document.getElementById("last_name").value;
-    const password = document.getElementById("password").value;
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Empêche l'envoi normal du formulaire
 
-    fetch('/api/register/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            username: username,
-            email: email,
-            first_name: first_name,
-            last_name: last_name,
-            password: password
-        })
-    })
-        .then(response => {
-            console.log(response); // Voir ce que le serveur renvoie
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json(); // Si c'est du JSON, le parser
-            } else {
-                return response.text(); // Sinon, renvoyer du texte brut pour diagnostiquer
+        // Récupérer les données du formulaire
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            console.log('Envoi des données:', data);
+
+            // Requête POST vers ton backend pour l'inscription
+            const response = await fetch('https://localhost:8000/api/user/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors', // Nécessaire pour les requêtes cross-origin
+                body: JSON.stringify(data), // Convertir les données en JSON
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erreur HTTP: ${response.status} ${errorText}`);
             }
-        })
-        .then(data => {
-            if (typeof data === 'string') {
-                console.log('Réponse non-JSON reçue:', data);
-                alert('Erreur inattendue : ' + data);
-            } else if (data.success) {
-                alert('Inscription réussie, vous pouvez maintenant vous connecter.');
-                window.location.href = '/login';
-            } else {
-                console.error('Erreur lors de l\'inscription:', data.error);
-                alert('Erreur lors de l\'inscription : ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur lors de l\'inscription:', error);
-            alert('Erreur lors de l\'inscription : ' + error.message);
-        });
+
+            const result = await response.json();
+            alert('Inscription réussie !');
+            console.log('Réponse du serveur:', result);
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur s\'est produite. Vérifiez la console pour plus de détails.');
+        }
+    });
 });
 
-// Connexion
-document.getElementById("login_form").addEventListener("submit", function(event) {
-    event.preventDefault();
-
-    const username = document.getElementById("login_username").value;
-    const password = document.getElementById("login_password").value;
-
-    fetch('/api/token/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            username: username,
-            password: password
-        })
-    })
-        .then(response => {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json(); // Si c'est du JSON, le parser
-            } else {
-                return response.text(); // Sinon, renvoyer du texte brut pour diagnostiquer
-            }
-        })
-        .then(data => {
-            if (typeof data === 'string') {
-                console.log('Réponse non-JSON reçue:', data);
-                alert('Erreur inattendue : ' + data);
-            } else if (data.access) {
-                localStorage.setItem('jwtToken', data.access); // Stocker le token JWT
-                alert('Connexion réussie.');
-                window.location.href = '/protected-page';  // Redirection après la connexion
-            } else {
-                console.error('Erreur lors de la connexion:', data);
-                alert('Erreur lors de la connexion : ' + data.detail);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur lors de la connexion:', error);
-            alert('Erreur lors de la connexion : ' + error.message);
-        });
-});
