@@ -151,22 +151,26 @@ MIDDLEWARE = [
 
 # ----------------------------------------------------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
-    "https://pong.42lausanne.ch",
-    "https://localhost",
+    'https://pong.42lausanne.ch',
+    'https://localhost',
+    'https://127.0.0.1',
+    'https://pong.42lausanne.ch:3000',
+    'https://localhost:3000',
+    'https://127.0.0.1:3000'
 ]
 
 CORS_ALLOW_METHODS = (
-    "GET",
-    "PATCH",
-    "POST",
-    "PUT",
+    'GET',
+    'PATCH',
+    'POST',
+    'PUT',
 )
 
 CORS_ALLOW_HEADERS = (
-    "accept",
-    "authorization",
-    "content-type",
-    "user-agent",
+    'accept',
+    'authorization',
+    'content-type',
+    'user-agent',
 )
 
 # ----------------------------------------------------------------------------------------------------------------------
