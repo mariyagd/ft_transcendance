@@ -15,7 +15,7 @@ services:
       - pgpass
       - pg_superuser_pass
     volumes:
-      - postgres_data:/var/lib/postgresql/auth
+      - postgres_data:/var/lib/postgresql/data
     restart: always
 
   auth:
@@ -41,7 +41,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - media_files:/usr/src/app/media
+      - profile_photos:/usr/src/app/media/profile_photos
     restart: always
 
   nginx:
@@ -60,7 +60,18 @@ services:
     volumes:
       - static_files:/var/www/html/static
       - media_files:/var/www/html/media
+      - profile_photos:/var/www/html/profile_photos
     restart: always
+
+#  cron:
+#    build: ./requirements/cron
+#    image: cron:custom
+#    container_name: cron
+#    networks:
+#      - pong_network
+#    depends_on:
+#      - auth
+#    restart: always
 
 networks:
   pong_network:
@@ -71,8 +82,8 @@ volumes:
     name: postgres_data
     driver: local
     driver_opts:
-      type: none
-      device: /home/postgres/data
+      type: nfs
+      device: /Users/Shared/postgres/data/
       o: bind
   static_files:
     name: static_files
@@ -87,6 +98,13 @@ volumes:
     driver_opts:
       type: none
       device: site/media
+      o: bind
+  profile_photos:
+    name: profile_photos
+    driver: local
+    driver_opts:
+      type: none
+      device: site/profile_photos
       o: bind
 
 

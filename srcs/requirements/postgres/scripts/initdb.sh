@@ -26,7 +26,7 @@ echo "Initializing the database"
     echo "POSTGRES_USER: $POSTGRES_USER"
     echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
     echo "POSTGRES_DB: $POSTGRES_DB"
-    echo "PGPASSWORD: $PGPASSWORD"
+    echo "PG SUPERUSER PASSWORD: $PGPASSWORD"
   fi
 
   # initdb creates a new PostgreSQL database cluster.
@@ -41,7 +41,7 @@ echo "Initializing the database"
   fi
 
   # Add auth container ip adress to  pg_hba.conf
-  echo "host    all             all             $DJANGO_CONTAINER_IP/32           scram-sha-256" >> /var/lib/postgresql/data/pg_hba.conf
+  echo "host    all             all             $DJANGO_CONTAINER_IP/32           scram-sha-256" >> "$PGDATA"/pg_hba.conf
 
   # pg_ctl is a utility for initializing, starting, stopping, or restarting a PostgreSQL instance.
   # -D for data directory: the directory where the database cluster will be stored
@@ -58,6 +58,15 @@ echo "Initializing the database"
       CREATE ROLE $POSTGRES_USER
       WITH LOGIN PASSWORD '$POSTGRES_PASSWORD';
   "
+
+  # source :  https://docs.djangoproject.com/en/5.1/ref/databases/#optimizing-postgresql-s-configuration
+  # Django current settings: USE_TZ = True and TIME_ZONE = 'Europe/Zurich'
+  # Django needs the following parameters for its database connections
+  # You can configure them directly in postgresql.conf or more conveniently per database user with ALTER ROLE.
+  # I did both
+  psql -U postgres -c "ALTER ROLE $POSTGRES_USER SET client_encoding TO 'UTF8';"
+  psql -U postgres -c "ALTER ROLE $POSTGRES_USER SET default_transaction_isolation TO 'read committed';"
+  psql -U postgres -c "ALTER ROLE $POSTGRES_USER SET timezone TO 'Europe/Zurich';"
 
   # Create a database with owner
   psql -U postgres -c "
@@ -78,8 +87,8 @@ echo "Initializing the database"
   # -m Specifies the shutdown mode. Fast is recommended for normal shutdowns.
   pg_ctl -D "$PGDATA" -m fast -w stop
 
-  unset PGPASSWORD
-
 fi
+
+unset PGPASSWORD
 
 exec postgres -D "$PGDATA" -c config_file=/etc/postgresql/postgresql.conf

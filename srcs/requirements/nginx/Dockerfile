@@ -10,11 +10,11 @@ RUN apt-get update && \
       python3 \
       python3-pip
 
-COPY scripts/entrypoint.sh /
+COPY scripts/entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 COPY conf/nginx.conf /etc/nginx/nginx.conf.template
 COPY scripts/generate_certs.sh /etc/nginx/certs/generate_certs.sh
 
-RUN chmod +x ./entrypoint.sh \
+RUN chmod +x /docker-entrypoint-initdb.d/entrypoint.sh \
               /etc/nginx/certs/generate_certs.sh && \
     sh /etc/nginx/certs/generate_certs.sh
 
@@ -26,5 +26,5 @@ RUN gixy /etc/nginx/nginx.conf --format=text --output=/etc/nginx/nginx.conf.gixy
 EXPOSE 80
 EXPOSE 443
 
-CMD ["./entrypoint.sh"]
+CMD ["/docker-entrypoint-initdb.d/entrypoint.sh"]
 

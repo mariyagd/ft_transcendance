@@ -2,6 +2,10 @@
 
 #set -e # stop at first error
 
+#export SECRET_KEY=$(cat "$AUTH_SECRET_KEY_FILE")
+#export DJANGO_SETTINGS_MODULE=pong_site.settings
+#export PYTHONPATH=/usr/src/app
+
 PERMISSIONS=$(stat -c "%a" /usr/src/app/media)
 OWNER=$(stat -c "%U" /usr/src/app/media)
 GROUP=$(stat -c "%G" /usr/src/app/media)
@@ -32,11 +36,25 @@ export DJANGO_SUPERUSER_PASSWORD
 export DJANGO_SUPERUSER_USERNAME
 export DJANGO_SUPERUSER_EMAIL
 
+if [ "$LOG_LEVEL" = "DEBUG" ]; then
+    PGNAME=$(cat "$POSTGRES_DB_NAME_FILE")
+    PGUSER=$(cat "$POSTGRES_USER_FILE")
+    PGPASS=$(cat "$POSTGRES_PASSWORD_FILE")
+    DJANGO_SUPERUSER_EMAIL=$(cat "$DJANGO_SUPERUSER_EMAIL_FILE")
+    DJANGO_SUPERUSER_USERNAME=$(cat "$DJANGO_SUPERUSER_USERNAME_FILE")
+    DJANGO_SUPERUSER_PASSWORD=$(cat "$DJANGO_SUPERUSER_PASSWORD_FILE")
+
+    echo "LOG_LEVEL is set to: $LOG_LEVEL" 
+    echo "Debug mode is: $DEBUG" 
+    echo "DJANGO_SUPERUSER_EMAIL: $DJANGO_SUPERUSER_EMAIL"
+    echo "DJANGO_SUPERUSER_USERNAME: $DJANGO_SUPERUSER_USERNAME" 
+    echo "DJANGO_SUPERUSER_PASSWORD: $DJANGO_SUPERUSER_PASSWORD" 
+fi
+
 # create tables from models
 echo "Make migrations"
 python3 manage.py makemigrations pong_app
 
-echo "LOG_LEVEL is set to $LOG_LEVEL"
 
 if [ "$LOG_LEVEL" = "DEBUG" ]; then
     echo "executing python3 manage.py sqlmigrate pong_app 0001"
@@ -52,6 +70,8 @@ if [ "$UNAPPLIED_MIGRATIONS" -gt 0 ]; then
 else
     echo "No migrations to apply."
 fi
+
+python3 manage.py collectstatic --noinput
 
 sleep 5
 
@@ -79,4 +99,14 @@ END
     echo "Superuser '$DJANGO_SUPERUSER_USERNAME' created successfully."
 fi
 
-gunicorn -c gunicorn.conf.py pong_site.wsgi:application
+#python3 manage.py crontab add
+#python3 manage.py crontab show
+#sleep 2
+#crontab -l > /usr/src/app/mycron
+#sed -i "s|^\(\* \* \* \* \*\) \(.*\)|\1 su - $USERNAME -c \2|" /usr/src/app/mycron
+#crontab /usr/src/app/mycron
+#service cron start
+#rm /usr/src/app/mycron
+#service cron start
+
+exec gunicorn -c gunicorn.conf.py pong_site.wsgi:application

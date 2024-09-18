@@ -15,7 +15,7 @@ import logging # for custom logs messages
 from pathlib import Path
 from datetime import timedelta # for jwt
 from django.conf import settings
-from django.conf.global_settings import AUTH_USER_MODEL
+from django.core.exceptions import ImproperlyConfigured
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -25,15 +25,53 @@ logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 # Function to get the value of a secret from a file
-def get_docker_secret(key, default):
-    value = os.getenv(key, default)
-    if os.path.isfile(value):
+# If the docker secret file is not found, raise an error and stop the porject
+def get_docker_secret(key):
+    value = os.getenv(key)  # On ne fournit pas de valeur par défaut
+    if value and os.path.isfile(value):
         with open(value) as f:
-            return f.read()
+            secret = f.read().strip()
+           # logger.debug(f"Secret file for {key} was successfully read.")
+            return secret
     else:
-        logging.critical(f"Secret file {value} not found")
-    return value
+        #logging.critical(f"Secret file {value} not found or {key} not set.")
+        raise ImproperlyConfigured(f"Secret file {value} not found or {key} not set.")
 
+# ----------------------------------------------------------------------------------------------------------------------
+import os
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {  # Ajout d'un handler de fichier
+            'level': LOG_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': '/logs/django.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],  # Ajout du handler de fichier
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'pong_app': {
+            'handlers': ['console', 'file'],  # Ajout du handler de fichier
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,7 +82,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_docker_secret("AUTH_SECRET_KEY_FILE", "")
+SECRET_KEY = get_docker_secret("AUTH_SECRET_KEY_FILE")
+#SECRET_KEY = os.getenv("SECRET_KEY", "ibtsbkme9qzobigklv7eytb5c9l8tpdhjjk")
+#logger.debug(f"SECRET_KEY: {SECRET_KEY}")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -53,11 +93,11 @@ if os.getenv("DEBUG") == "True":
     DEBUG = True
 else:
     DEBUG = False
-logger.debug(f'Debug mode is {DEBUG}')
+#logger.debug(f'Debug mode is {DEBUG}')
 
 # ----------------------------------------------------------------------------------------------------------------------
 ALLOWED_HOSTS = [
-    os.getenv("DOMAIN_NAME", "default-domain.com"),
+    os.getenv("DOMAIN_NAME", "localhost"),
     '127.0.0.1',
     'localhost',
 ]
@@ -75,8 +115,26 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+#    'django_cron',
 ]
 
+#CRON_CLASSES = [
+#    'pong_app.cron.FlushExpiredTokensCronJob',
+#]
+# ----------------------------------------------------------------------------------------------------------------------
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+#CRONJOBS = [
+#    (
+#        '*/1 * * * *', 'pong_app.cron.flush_expired_tokens', '>> /usr/src/app/cron_job.log 2>&1',
+#        {
+#            'POSTGRES_DB_NAME_FILE': '/run/secrets/postgres_db_name',
+#            'POSTGRES_USER_FILE': '/run/secrets/postgres_user',
+#            'POSTGRES_PASSWORD_FILE': '/run/secrets/postgres_password',
+#        }
+#    )
+#]
+#
 # ----------------------------------------------------------------------------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -87,7 +145,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTStatelessUserAuthentication', # for microservices
     ),
 }
-
 # ----------------------------------------------------------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = [
     #'pong_app.authentication.MyCustomModelBackend',
@@ -98,7 +155,7 @@ AUTHENTICATION_BACKENDS = [
 # ----------------------------------------------------------------------------------------------------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
@@ -199,13 +256,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pong_site.wsgi.application'
 
 # ----------------------------------------------------------------------------------------------------------------------
-PGNAME = get_docker_secret(key="POSTGRES_DB_NAME_FILE", default="")
-PGUSER = get_docker_secret(key="POSTGRES_USER_FILE", default="")
-PGPASS = get_docker_secret(key="POSTGRES_PASSWORD_FILE", default="")
+PGNAME = get_docker_secret("POSTGRES_DB_NAME_FILE")
+#logger.debug(f'PGNAME: {PGNAME}')
 
-logger.debug(f'PGNAME: {PGNAME}')
-logger.debug(f'PGUSER: {PGUSER}')
-logger.debug(f'PGPASS: {PGPASS}')
+PGUSER = get_docker_secret("POSTGRES_USER_FILE")
+#logger.debug(f'PGUSER: {PGUSER}')
+
+PGPASS = get_docker_secret("POSTGRES_PASSWORD_FILE")
+#logger.debug(f'PGPASS: {PGPASS}')
+
 
 DATABASES = {
     'default': {
@@ -271,11 +330,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+USE_TZ = True
+
 TIME_ZONE = 'Europe/Zurich'
 
 USE_I18N = True
 
-USE_TZ = True
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Static files (CSS, JavaScript, Images)
@@ -287,6 +349,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+#STATIC_ROOT = None
 
 STORAGES = {
     # ...
@@ -305,7 +368,7 @@ AUTH_USER_MODEL = 'pong_app.User'
 
 # ----------------------------------------------------------------------------------------------------------------------
 # for media serving: images
-MEDIA_URL = '/media/'
+MEDIA_URL = 'https://localhost/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STORAGES = {

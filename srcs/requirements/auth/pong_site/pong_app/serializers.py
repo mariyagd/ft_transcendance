@@ -1,6 +1,8 @@
+from email.policy import default
+from django.contrib.auth.models import update_last_login
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, validate_image_file_extension
 from .models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
@@ -21,21 +23,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty_file=True,
         validators=[
-            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png']),
-            file_size_validator
-        ]
+            file_size_validator,
+            validate_image_file_extension,
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])
+        ],
     )
     date_joined = serializers.DateTimeField(required=False, read_only=True, format=settings.DATETIME_FORMAT)
     last_login = serializers.DateTimeField(required=False, read_only=True, format=settings.DATETIME_FORMAT)
+    is_active = serializers.BooleanField(required=False, read_only=True)
 
     class Meta:
         model = User
-        fields = (
-            'username', 'password', 'password2', 'email',
-            'first_name', 'last_name', 'is_active',
-            'date_joined', 'last_login', 'profile_photo',
-            'image_height', 'image_width'
-        )
+        fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login']
+        read_only_fields = ['image_height', 'image_width']
 
     def validate(self, attrs):
         validate_password_match(attrs['password'], attrs['password2'])
@@ -57,7 +57,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # If the user didn't upload a photo, set the default one
         if not user.profile_photo:
-            user.profile_photo = 'images/default-user-profile-photo.jpg'  # Path from MEDIA_ROOT
+            user.profile_photo = 'profile_photos/default/default-user-profile-photo.jpg'
         user.set_password(validated_data['password'])
         user.save()
         return user
@@ -72,6 +72,7 @@ class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             print(f"User {user.username} has been reactivated.")
 
         token = super().get_token(user) # generate token
+        update_last_login(None, user)
 
         # Add custom claims
         token['username'] = user.username
@@ -81,15 +82,33 @@ class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 #-----------------------------------------------------------------------------------------------------------------------
 class UserProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False, allow_blank=False)
+    last_name = serializers.CharField(required=False, allow_blank=False)
+    profile_photo = serializers.ImageField(
+        default='profile_photos/default/default-user-profile-photo.jpg',
+        required=False,
+        allow_empty_file=True,
+        validators=[
+            file_size_validator,
+            validate_image_file_extension,
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])
+        ],
+    )
+    is_active = serializers.BooleanField(required=False)
+    updated_at = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
+    delete_photo = serializers.BooleanField(required=False, write_only=True)
+
     class Meta:
         model = User
-        fields = [
-            'username', 'email', 'first_name', 'last_name',
-            "is_active", "date_joined", "last_login",
-            "profile_photo", "image_height", "image_width"
-        ]
+        fields = [ 'username', 'email', 'first_name', 'last_name', 'is_active', 'profile_photo', 'date_joined', 'last_login', 'updated_at', 'delete_photo' ]
+        read_only_fields = [ 'image_height', 'image_width']
+
+    def validate(self, data):
+        if data.get('delete_photo') and data.get('delete_photo') == True:
+            data['profile_photo'] = 'profile_photos/default/default-user-profile-photo.jpg'
+        return data
 
 #-----------------------------------------------------------------------------------------------------------------------
 class ChangePasswordSerializer(serializers.Serializer):

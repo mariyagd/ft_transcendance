@@ -1,6 +1,9 @@
+import logging
+from rest_framework_simplejwt.views import TokenBlacklistView
 from rest_framework import (
     generics,
-    status
+    status,
+    request
 )
 from .serializers import (
     RegisterSerializer,
@@ -14,7 +17,23 @@ from django.contrib.auth.password_validation import password_changed
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
+#-----------------------------------------------------------------------------------------------------------------------
+class MyCustomTokenBlackListView(TokenBlacklistView):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        # Appelle la méthode par défaut de TokenBlacklistView
+        response = super().post(request, *args, **kwargs)
+
+        # Vérifie si le statut est 200 (succès)
+        if response.status_code == status.HTTP_200_OK:
+            custom_response_data = {"message": "Token successfully blacklisted."}
+            custom_response_data.update(response.data)  # Ajoute les données originales
+            return Response(custom_response_data, status=status.HTTP_200_OK)
+        else:
+            return response
 
 #-----------------------------------------------------------------------------------------------------------------------
 # RegisterView : uses RegisterViewSerializer to validates data and create a new user
@@ -28,6 +47,7 @@ class RegisterView(generics.CreateAPIView):
 #-----------------------------------------------------------------------------------------------------------------------
 # UserProfileView: PUT, PATCH, GET requests because RetrieveUpdateDestroyAPIView is used
 # POST is not allowed
+# update is automatically done by the RetrieveUpdateAPIView
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]

@@ -1,21 +1,33 @@
 # Variables
-COMPOSE_FILE = ./srcs/docker-compose.yml
+COMPOSE_FILE := ./srcs/docker-compose.yml
 
-GREEN = \033[0;32m
-NC = \033[0m
+GREEN := \033[0;32m
+NC := \033[0m
+
+UNAME_S := $(shell uname -s)
+POSTGRES_DIR := /Users/Shared/postgres
+SITE_DIR := ./srcs/site
+USERNAME := $$(whoami)
+GROUPNAME = $$(whoami)
+
+ifeq (${UNAME_S}, "Darwin")
+	GROUPNAME = staff
+endif
 
 create-directories:
-	@if [ ! -d "/home/postgres/data" ]; then \
-		echo "${GREEN}\nCREATING DIRECTORY \"/home/postgres/data\" FOR DATABASE ${NC}"; \
-		sudo mkdir -p /home/postgres/data; \
+	@if [ ! -d "${POSTGRES_DIR}/data" ]; then \
+		echo "${GREEN}\nCREATING DIRECTORY \"${POSTGRES_DIR}/data\" FOR DATABASE ${NC}"; \
+		sudo mkdir -p ${POSTGRES_DIR}/data; \
 	fi
 
 set-permissions:
-	@if [ "$$(stat -c %U /home/postgres/data)" != "$$(whoami)" ]; then \
-		echo "${GREEN}\nSETTING PERMISSIONS FOR \"/home/postgres/data\" DATA DIRECTORY ${NC}"; \
-		sudo chown -R $$(whoami):$$(whoami) /home/postgres/data; \
-		sudo chmod -R 755 /home/postgres/data; \
+	@echo "${GREEN}\nSETTING PERMISSIONS FOR \"${POSTGRES_DIR}/data\" DATA DIRECTORY ${NC}"
+	@if [ ${UNAME_S} = "Darwin" ]; then \
+		sudo chown -R ${USERNAME}:${GROUPENAME} ${POSTGRES_DIR}/; \
+	elif [ ${UNAME_S} = "Linux" ]; then \
+		sudo chown -R 102:104 ${POSTGRES_DIR}/; \
 	fi
+	@sudo chmod -R 775 ${POSTGRES_DIR}/
 
 dangling-images:
 	@echo "${GREEN}\nCLEANING DANGLING IMAGES ${NC}"
@@ -53,16 +65,19 @@ clean: down
 # Target to remove all resources and data
 fclean: down-rmi
 	@$(MAKE) dangling
-	@if [ -d "/home/postgres/data" ]; then \
+	@if [ -d "${POSTGRES_DIR}/" ]; then \
   		echo "${GREEN}\nREMOVING SAVED DATA IN HOST MACHINE ${NC}"; \
-  		echo "${GREEN}NEEDS SUDO LOGIN ${NC}"; \
-  		sudo rm -rf /home/postgres/data*; \
-		sudo rmdir /home/postgres/data; \
-		sudo rmdir /home/postgres/; \
-		sudo chown -R $$(whoami):$$(whoami) ./srcs/site/media; \
-		sudo chown -R $$(whoami):$$(whoami) ./srcs/site/static; \
+  		sudo chown -R ${USERNAME}:${GROUPENAME} ${POSTGRES_DIR}/; \
+  		sudo chmod -R 775 ${POSTGRES_DIR}/; \
+  		rm -rf ${POSTGRES_DIR}/*; \
+  		if [ ${UNAME_S} = "Darwin" ]; then \
+  			rmdir ${POSTGRES_DIR}; \
+		fi; \
 	fi
-
+	@echo "${GREEN}\nCHANGING PERMISSIONS FOR "site/media",  "site/static" AND "/site/profile_photos" to ${USERNAME}:${GROUPNAME} ${NC}";
+	@sudo chown -R ${USERNAME}:${GROUPENAME} ${SITE_DIR}/
+	@echo "${GREEN}\nREMOVING IMAGES IN srcs/site/profile_photos ${NC}";
+	rm -rf ${SITE_DIR}/profile_photos/users/*
 
 re: clean all
 
