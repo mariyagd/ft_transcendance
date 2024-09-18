@@ -1,8 +1,12 @@
 from email.policy import default
+
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator, validate_image_file_extension
+from rest_framework.exceptions import AuthenticationFailed
+
 from .models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
@@ -63,9 +67,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 #------------------------------------------------------------------------------------------------------------------
+# source: https://django-rest-framework-simplejwt.readthedocs.io/en/stable/customizing_token_claims.html
 class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
     @classmethod
     def get_token(cls, user):
+
+        if not user:
+            raise AuthenticationFailed("Invalid e-mail or password")
+
         if not user.is_active:
             user.is_active = True
             user.save(update_fields=['is_active'])
