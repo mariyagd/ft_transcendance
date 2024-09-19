@@ -100,6 +100,7 @@ ALLOWED_HOSTS = [
     os.getenv("DOMAIN_NAME", "localhost"),
     '127.0.0.1',
     'localhost',
+    'auth',
 ]
 # ----------------------------------------------------------------------------------------------------------------------
 # Application definition
@@ -154,8 +155,8 @@ AUTHENTICATION_BACKENDS = [
 
 # ----------------------------------------------------------------------------------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
@@ -214,6 +215,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://pong.42lausanne.ch',
     'https://localhost',
     'https://127.0.0.1',
+    'https://auth',
+    'https://auth:8000',
 ]
 
 CORS_ALLOW_METHODS = (

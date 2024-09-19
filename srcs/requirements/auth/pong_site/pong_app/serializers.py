@@ -108,7 +108,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
-    delete_photo = serializers.BooleanField(required=False, write_only=True)
+    delete_photo = serializers.BooleanField(default=False, required=False, write_only=True)
 
     class Meta:
         model = User
