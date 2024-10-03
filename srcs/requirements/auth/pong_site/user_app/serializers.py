@@ -110,10 +110,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     delete_photo = serializers.BooleanField(default=False, required=False, write_only=True)
+    is_online = serializers.BooleanField(required=False, read_only=True)
 
     class Meta:
         model = User
-        fields = [ 'id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'profile_photo', 'date_joined', 'last_login', 'updated_at', 'delete_photo' ]
+        fields = [ 'id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'profile_photo', 'date_joined', 'last_login', 'updated_at', 'delete_photo', 'is_online' ]
         read_only_fields = [ 'image_height', 'image_width']
 
     def validate(self, data):

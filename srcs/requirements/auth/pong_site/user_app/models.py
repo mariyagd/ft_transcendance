@@ -7,7 +7,6 @@ import uuid
 # of the default User model ( inheritance from AbstractUser)
 # additional fields and methods can be added later
 class User(AbstractUser):
-    friends =  models.ManyToManyField("self", blank=True)
     groups = models.ManyToManyField(
         Group,
         related_name='custom_user_groups',
@@ -33,6 +32,8 @@ class User(AbstractUser):
     # if it's not unqiue: exception IntegrityError
     # The default User model doesn't have the unique parameter
     email = models.EmailField(unique=True)
+
+    is_online = models.BooleanField(default=True)
 
     # USERNAME_FIELD: email will be used for authentication
     # the default is username
