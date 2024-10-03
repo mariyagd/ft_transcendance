@@ -65,7 +65,7 @@ LOGGING = {
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'pong_app': {
+        'user_app': {
             'handlers': ['console', 'file'],  # Ajout du handler de fichier
             'level': LOG_LEVEL,
             'propagate': False,
@@ -105,7 +105,8 @@ ALLOWED_HOSTS = [
 # ----------------------------------------------------------------------------------------------------------------------
 # Application definition
 INSTALLED_APPS = [
-    'pong_app.apps.PongAppConfig',
+    'user_app.apps.UserAppConfig',
+    'friends_app.apps.FriendsAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -120,14 +121,14 @@ INSTALLED_APPS = [
 ]
 
 #CRON_CLASSES = [
-#    'pong_app.cron.FlushExpiredTokensCronJob',
+#    'user_app.cron.FlushExpiredTokensCronJob',
 #]
 # ----------------------------------------------------------------------------------------------------------------------
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 #CRONJOBS = [
 #    (
-#        '*/1 * * * *', 'pong_app.cron.flush_expired_tokens', '>> /usr/src/app/cron_job.log 2>&1',
+#        '*/1 * * * *', 'user_app.cron.flush_expired_tokens', '>> /usr/src/app/cron_job.log 2>&1',
 #        {
 #            'POSTGRES_DB_NAME_FILE': '/run/secrets/postgres_db_name',
 #            'POSTGRES_USER_FILE': '/run/secrets/postgres_user',
@@ -148,15 +149,15 @@ REST_FRAMEWORK = {
 }
 # ----------------------------------------------------------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = [
-    #'pong_app.authentication.MyCustomModelBackend',
+    #'user_app.authentication.MyCustomModelBackend',
     'django.contrib.auth.backends.AllowAllUsersModelBackend',  # Permet à tous les utilisateurs de s'authentifier, même inactifs
     'django.contrib.auth.backends.ModelBackend', # Backend par défaut
 ]
 
 # ----------------------------------------------------------------------------------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
@@ -175,11 +176,11 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
   #  'USER_AUTHENTICATION_RULE': "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    'USER_AUTHENTICATION_RULE': "pong_app.authentication.custom_user_authentication_rule", # custom behaviour: inactif account's can login
+    'USER_AUTHENTICATION_RULE': "user_app.authentication.custom_user_authentication_rule", # custom behaviour: inactif account's can login
 
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     "TOKEN_TYPE_CLAIM": "token_type",
-    "TOKEN_USER_CLASS": "pong_app.models",
+    "TOKEN_USER_CLASS": "user_app.models",
 
     "JTI_CLAIM": "jti",
 
@@ -188,7 +189,7 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 
 #    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
-    "TOKEN_OBTAIN_SERIALIZER": "pong_app.serializers.MyCustomTokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "user_app.serializers.MyCustomTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -345,7 +346,7 @@ USE_I18N = True
 # ----------------------------------------------------------------------------------------------------------------------
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-#pong_app/static/pong_app
+#user_app/static/user_app
 STATIC_URL = 'static/'
 
 # Default primary key field type
@@ -366,7 +367,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ----------------------------------------------------------------------------------------------------------------------
 # use the Custom User model instead of the default User model
-AUTH_USER_MODEL = 'pong_app.User'
+AUTH_USER_MODEL = 'user_app.User'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
