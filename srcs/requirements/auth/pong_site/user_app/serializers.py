@@ -78,7 +78,8 @@ class MyCustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         if not user.is_active:
             user.is_active = True
-            user.save(update_fields=['is_active'])
+            user.is_online = True
+            user.save(update_fields=['is_active', 'is_online'])
             print(f"User {user.username} has been reactivated.")
 
         token = super().get_token(user) # generate token
