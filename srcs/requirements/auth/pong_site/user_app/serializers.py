@@ -148,10 +148,10 @@ class UserProtectedInfoSerializer(serializers.ModelSerializer):
     last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login']
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login', 'is_online']
 
 class UserProtectedPublicInfoSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
     class Meta:
         model = User
-        fields = ['id', 'username', 'profile_photo', 'is_active', 'date_joined']
+        fields = ['id', 'username', 'profile_photo', 'is_active', 'date_joined', 'is_online']

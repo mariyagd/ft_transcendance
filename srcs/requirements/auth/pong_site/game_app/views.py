@@ -188,18 +188,19 @@ class ShowOtherUserStatsView(APIView):
             elif not other_user.is_active:
                 return Response({"error": f"User {other_user_id} is not active."}, status=status.HTTP_404_NOT_FOUND)
 
+            # always add username no matter if the request is authenticated or not
+            result['username'] = other_user.username
+
             # if the request is authenticated -> add info about the friend status, first_name and last_name
             if request.user.is_authenticated:
                 if other_user == request.user:
                     return Response({"error": f"Call show-current-user-stats."}, status=status.HTTP_400_BAD_REQUEST)
                 if are_friends(request.user, other_user):
                     is_friend = True
-                    result['first_name'] = other_user.first_name
-                    result['last_name'] = other_user.last_name
+                result['first_name'] = other_user.first_name
+                result['last_name'] = other_user.last_name
+                result['is_online'] = other_user.is_online
                 result['is_friend'] = is_friend
-
-            # always add username no matter if the request is authenticated or not
-            result['username'] = other_user.username
 
             # Get user stats
             user_stats = get_user_stats(other_user)
