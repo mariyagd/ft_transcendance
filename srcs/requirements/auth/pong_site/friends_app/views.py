@@ -16,6 +16,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 
+# Get a reference of the custom user model
+User = get_user_model()
+
+def are_friends(user1, user2):
+    if FriendRequest.objects.filter(sender=user1, receiver=user2, are_friends=True).exists() or \
+            FriendRequest.objects.filter(sender=user2, receiver=user1, are_friends=True).exists():
+        return True
+    else:
+        return False
+
 #-----------------------------------------------------------------------------------------------------------------------
 # CreateAPIView uses only POST requests
 class SendFriendRequestView(generics.CreateAPIView):
@@ -35,29 +45,29 @@ class SendFriendRequestView(generics.CreateAPIView):
         # get sender is the current user
         sender = self.request.user
 
-        # Get a reference of the custom user model
-        User = get_user_model()
+        try:
+            # get receiver's user object from the id
+            receiver = User.objects.get(id=receiver_id)
 
-        # get receiver's user object from the id
-        receiver = User.objects.get(id=receiver_id)
-
-        # Check if receiver and sender are the same
-        if sender == receiver:
-            raise ValidationError({"error": "You can't send a friend request to yourself."})
-        # Check if they are already friends
-        elif FriendRequest.objects.filter(sender=sender, receiver=receiver, are_friends=True).exists() or \
-           FriendRequest.objects.filter(sender=receiver, receiver=sender, are_friends=True).exists():
-                raise ValidationError({"error": "You are already friends with this user."})
-        # Check if the friend request has already been sent by the sender
-        elif FriendRequest.objects.filter(sender=sender, receiver=receiver, is_active_request=True).exists():
-            raise ValidationError({"error": "You have already sent a friendship request to this user."})
-        # Check if the friend request has already been sent by the receiver
-        elif FriendRequest.objects.filter(sender=receiver, receiver=sender, is_active_request=True).exists():
-            raise ValidationError({"error": "You have already received a friendship request from this user."})
-        # If all conditions are good, send the friend request
-        else:
-            FriendRequest.objects.create(sender=sender, receiver=receiver, is_active_request=True, are_friends=False)
-            return Response({"message": "Friend request has been sent successfully."}, status=status.HTTP_200_OK)
+            # Check if receiver and sender are the same
+            if sender == receiver:
+                raise ValidationError({"error": "You can't send a friend request to yourself."})
+            # Check if they are already friends
+            elif FriendRequest.objects.filter(sender=sender, receiver=receiver, are_friends=True).exists() or \
+               FriendRequest.objects.filter(sender=receiver, receiver=sender, are_friends=True).exists():
+                    raise ValidationError({"error": "You are already friends with this user."})
+            # Check if the friend request has already been sent by the sender
+            elif FriendRequest.objects.filter(sender=sender, receiver=receiver, is_active_request=True).exists():
+                raise ValidationError({"error": "You have already sent a friendship request to this user."})
+            # Check if the friend request has already been sent by the receiver
+            elif FriendRequest.objects.filter(sender=receiver, receiver=sender, is_active_request=True).exists():
+                raise ValidationError({"error": "You have already received a friendship request from this user."})
+            # If all conditions are good, send the friend request
+            else:
+                FriendRequest.objects.create(sender=sender, receiver=receiver, is_active_request=True, are_friends=False)
+                return Response({"message": "Friend request has been sent successfully."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": f"User with id \"{receiver_id}\" not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

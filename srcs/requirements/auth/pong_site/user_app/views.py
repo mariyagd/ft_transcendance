@@ -1,5 +1,7 @@
 import logging
-
+from django.core.management.commands.loaddata import humanize
+from django.core.serializers import get_serializer
+from django.db.models.expressions import result
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenBlacklistView
 from rest_framework import (
@@ -11,6 +13,9 @@ from .serializers import (
     RegisterSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
+    UserIdSerializer,
+    UserProtectedInfoSerializer,
+    UserProtectedPublicInfoSerializer
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
@@ -18,7 +23,9 @@ from rest_framework.response import Response
 from django.contrib.auth.password_validation import password_changed
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from friends_app.models import FriendRequest
+from game_app.views import get_user_stats
+from friends_app.views import are_friends
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -26,11 +33,8 @@ logger = logging.getLogger(__name__)
 #-----------------------------------------------------------------------------------------------------------------------
 #class MyCustomTokenBlackListView(TokenBlacklistView):
 #    http_method_names = ['post']
-#    permission_classes = [IsAuthenticated]
 #
 #    def post(self, request, *args, **kwargs):
-#        if not request.user.is_authenticated:
-#            return Response({"error": "User is not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
 #        # Call the default method of TokenBlacklistView with super()
 #        # The super() function is used to give access to methods and properties of a parent or sibling class.
 #        # The super() function returns an object that represents the parent class.
@@ -43,7 +47,19 @@ logger = logging.getLogger(__name__)
 #            return Response(custom_response_data, status=status.HTTP_200_OK)
 #        else:
 #            return response
+#-----------------------------------------------------------------------------------------------------------------------
 
+def get_user_data_auth(current_user, other_user):
+    user_data = UserProtectedInfoSerializer(other_user).data
+    if current_user != other_user:
+        if are_friends(current_user, other_user):
+           is_friend = True
+        else:
+            is_friend = False
+        user_data.update({"is_friend": is_friend})
+    return user_data
+
+#-----------------------------------------------------------------------------------------------------------------------
 
 class MyCustomTokenBlackListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -129,11 +145,60 @@ class ChangePasswordView(generics.UpdateAPIView):
 #-----------------------------------------------------------------------------------------------------------------------
 
 class ShowAllUsersView(generics.ListAPIView):
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+    serializer_class = UserProtectedInfoSerializer
+    permission_classes = [AllowAny]
     http_method_names = ['get']
 
     def get_queryset(self):
-        user = self.request.user
-        return User.objects.filter(is_active=True).exclude(last_login__isnull=True).exclude(is_superuser=True).exclude(id=user.id)
 
+        # Get all users according to the user's authentication status
+        if self.request.user.is_authenticated:
+            all_users = User.objects.filter(is_active=True).exclude(last_login__isnull=True).exclude(is_superuser=True).exclude(id=self.request.user.id)
+        else:
+            all_users = User.objects.filter(is_active=True).exclude(last_login__isnull=True).exclude(is_superuser=True)
+
+        result = []
+
+        for user in all_users:
+            if self.request.user.is_authenticated:
+                user_data = get_user_data_auth(self.request.user, user)
+            else:
+                user_data = UserProtectedPublicInfoSerializer(user).data
+
+            user_stats = get_user_stats(user)
+            user_data.update(user_stats)
+            result.append(user_data)
+        return result
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        return Response(queryset)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Display user info from user id
+# if the request user and the user_id are the same, return all user info except is_friend
+# if the request user and the user_id are different, return all user info and is_friend
+# if the request is not authenticated return all less user info
+class GetUserFromIDView(APIView):
+    http_method_names = ['post']
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserIdSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user_id = serializer.validated_data['user_id']
+        try:
+            user = User.objects.get(id=user_id)
+            if not user.last_login:
+                return Response({"error": "User has never logged in."}, status=status.HTTP_400_BAD_REQUEST)
+            elif not user.is_active:
+                return Response({"error": "User is not active."}, status=status.HTTP_404_NOT_FOUND)
+
+            if request.user.is_authenticated:
+                user_data = get_user_data_auth(request.user, user)
+                return Response(user_data, status=status.HTTP_200_OK)
+            else:
+                return Response(UserProtectedPublicInfoSerializer(user).data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+#-----------------------------------------------------------------------------------------------------------------------

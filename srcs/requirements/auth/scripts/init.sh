@@ -59,6 +59,7 @@ fi
 echo "Make migrations"
 python3 manage.py makemigrations user_app
 python3 manage.py makemigrations friends_app
+python3 manage.py makemigrations game_app
 
 
 if [ "$LOG_LEVEL" = "DEBUG" ]; then

@@ -107,6 +107,7 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     'user_app.apps.UserAppConfig',
     'friends_app.apps.FriendsAppConfig',
+    'game_app.apps.GameAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -388,7 +389,7 @@ STORAGES = {
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-DATETIME_FORMAT = '%d %b %Y %H:%M:%S'
+DATETIME_FORMAT = '%d %b %Y %H:%M'
 
 #-----------------------------------------------------------------------------------------------------------------------
 # SSL/ HTTPS

@@ -9,7 +9,8 @@ from .views import (
     UserProfileView,
     ChangePasswordView,
     MyCustomTokenBlackListView,
-    ShowAllUsersView
+    ShowAllUsersView,
+    GetUserFromIDView,
 )
 from .cron import flush_expired_tokens, show_blacklisted_tokens
 
@@ -26,4 +27,5 @@ urlpatterns = [
     path('flush-expired-tokens/', flush_expired_tokens, name='flush_expired_tokens'),
     path('show-blacklisted-tokens/', show_blacklisted_tokens, name='show_blacklisted_tokens'),
     path('show-all-users/', ShowAllUsersView.as_view(), name='show_all_users'),
+    path('get-user-from-id/', GetUserFromIDView.as_view(), name='get_user_from_id'),
 ]

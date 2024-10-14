@@ -38,7 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login']
+        fields = ['id', 'username', 'password', 'password2', 'email', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login']
         read_only_fields = ['image_height', 'image_width']
 
     def validate(self, attrs):
@@ -139,3 +139,19 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise ValidationError({"old_password": "The old password is incorrect."})
         return value
 #-------------------------------------------------------------------------------------------------------------------------
+class UserIdSerializer(serializers.Serializer):
+    user_id = serializers.UUIDField(required=True)
+# ----------------------------------------------------------------------------------------------------------------------
+
+class UserProtectedInfoSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
+    last_login = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_photo', 'is_active', 'date_joined', 'last_login']
+
+class UserProtectedPublicInfoSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(read_only=True, format=settings.DATETIME_FORMAT)
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'profile_photo', 'is_active', 'date_joined']
