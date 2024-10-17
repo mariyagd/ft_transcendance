@@ -76,6 +76,7 @@ class StartGameSessionSerializer(serializers.Serializer):
         session = attrs.get('session')
         winner = attrs.get('winner_alias')
 
+        # validate the number of players
         if session.get('mode') == GameSession.TOURNAMENT and (len(players) < 2 or len(players) > 10):
             raise serializers.ValidationError({"error": "Number of players must be between 2 and 10."})
         elif session.get('mode') != GameSession.TOURNAMENT and (len(players) < 2 or len(players) > 4):
@@ -101,7 +102,7 @@ class StartGameSessionSerializer(serializers.Serializer):
                     try:
                         user = User.objects.get(id=user_id)
                     except User.DoesNotExist:
-                        raise ValidationError({"error": f"User with ID {user_id} does not exist."})
+                        raise ValidationError({"error": "User does not exist."})
             # -------------------------------------------------------------------------------------
         if winner not in unique_aliases:
             raise ValidationError({"error": f"Winner \"{winner}\" must be one of the players"})

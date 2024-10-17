@@ -15,7 +15,8 @@ from .serializers import (
     ChangePasswordSerializer,
     UserIdSerializer,
     UserProtectedInfoSerializer,
-    UserProtectedPublicInfoSerializer
+    UserProtectedPublicInfoSerializer,
+    VerifyUserLoginSerializer
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
@@ -202,3 +203,23 @@ class GetUserFromIDView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 #-----------------------------------------------------------------------------------------------------------------------
+
+class VerifyUserLoginView(APIView):
+    permission_classes = [AllowAny]
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        serializer = VerifyUserLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user = User.objects.get(email=serializer.validated_data['email'])
+            if not user.last_login:
+                return Response({"error": "User has never logged in."}, status=status.HTTP_404_NOT_FOUND)
+            elif not user.is_active:
+                return Response({"error": "User is not active."}, status=status.HTTP_404_NOT_FOUND)
+            elif not user.check_password(serializer.validated_data['password']):
+                return Response({"error": "Incorrect password."}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"message": "Login successful."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)

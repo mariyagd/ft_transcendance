@@ -65,7 +65,7 @@ class SendFriendRequestView(generics.CreateAPIView):
             # If all conditions are good, send the friend request
             else:
                 FriendRequest.objects.create(sender=sender, receiver=receiver, is_active_request=True, are_friends=False)
-                return Response({"message": "Friend request has been sent successfully."}, status=status.HTTP_200_OK)
+                return Response({"message": "Friend request has been sent successfully."}, status=status.HTTP_201_CREATED)
         except User.DoesNotExist:
             return Response({"error": f"User with id \"{receiver_id}\" not found."}, status=status.HTTP_404_NOT_FOUND)
 

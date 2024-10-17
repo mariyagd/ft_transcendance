@@ -5,11 +5,17 @@ from django.conf import settings
 
 # ----------------------------------------------------------------------------------------------------------------------
 class GameSession(models.Model):
+
+    # Constants declaration
+    # The front end sends the mode of the game as a string of 2 characters
     VERSUS = "VS"
     TOURNAMENT = "TN"
     LAST_MAN_STANDING = "LS"
     BRICK_BREAKER = "BB"
 
+    # Choices declaration
+    # First element of each tuple is the value stored in the database
+    # Second element is the human-readable name
     MODE_CHOICES = [
         (VERSUS, "versus"),
         (TOURNAMENT, "tournament"),
@@ -17,8 +23,10 @@ class GameSession(models.Model):
         (BRICK_BREAKER, "brick breaker")
     ]
 
+    # the id of a session
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
 
+    # mode of the game is represented by a string of 2 characters
     mode = models.CharField(
         max_length=2,
         choices=MODE_CHOICES,
@@ -30,8 +38,11 @@ class GameSession(models.Model):
 
     # date finished is set by back end
     end_date = models.DateTimeField(auto_now_add=True, editable=False)
+
+    # duration is start_date - end_date
     game_duration = models.DurationField(blank=True, null=True)
 
+    # the front end sends the winner alias which is verified if it's in the players list
     winner_alias = models.CharField(max_length=50)
 
     # number of player is the len of the players list
@@ -41,6 +52,8 @@ class GameSession(models.Model):
         return f"Game {self.mode} with id {self.id}"
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Database register each player in the game session.
+# E.g. for a session with 4 players, 4 PlayerProfile objects are created
 class PlayerProfile(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='player_game', null=True, blank=True)
