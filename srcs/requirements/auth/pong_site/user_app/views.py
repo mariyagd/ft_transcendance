@@ -116,32 +116,31 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 #-----------------------------------------------------------------------------------------------------------------------
+# To change a password programmatically, use set_password() (takes care of the password hashing.)
+# Django also provides views and forms that may be used to allow users to change their own passwords.
+# Changing a user’s password will log out all their sessions.
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
-    queryset = User.objects.all()
     permission_classes = [IsAuthenticated]
-    http_method_names = ['post']
+    http_method_names = ['patch']
 
-    def get_object(self, queryset=None):
-        return self.request.user
-
-    def update(self, request, *args, **kwargs):
-        user = self.get_object()
+    def patch(self, request, *args, **kwargs):
+        #get the user object from the request context
+        current_user = request.user
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-            # Check old password
-            if not user.check_password(serializer.validated_data['old_password']):
-                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+        # Check old password
+        if not current_user.check_password(serializer.validated_data['old_password']):
+            return Response({"old_password": "The old password is incorrect."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Set the new password
-            user.set_password(serializer.validated_data['new_password'])
-            user.save()
+        # Set the new password
+        current_user.set_password(serializer.validated_data['new_password'])
+        current_user.save()
 
-            password_changed(serializer.data.get("new_password"), user=user)
-            return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
+        password_changed(serializer.data.get("new_password"), user=current_user)
+        return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -203,7 +202,9 @@ class GetUserFromIDView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 #-----------------------------------------------------------------------------------------------------------------------
-
+# check_password(raw_password)
+# Returns True if the given raw string is the correct password for the user.
+# This takes care of the password hashing in making the comparison.
 class VerifyUserLoginView(APIView):
     permission_classes = [AllowAny]
     http_method_names = ['post']
@@ -220,6 +221,8 @@ class VerifyUserLoginView(APIView):
             elif not user.check_password(serializer.validated_data['password']):
                 return Response({"error": "Incorrect password."}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"message": "Login successful."}, status=status.HTTP_200_OK)
+                return Response({"username": f"{user.username}"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#-----------------------------------------------------------------------------------------------------------------------

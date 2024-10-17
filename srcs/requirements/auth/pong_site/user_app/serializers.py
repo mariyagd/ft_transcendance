@@ -133,11 +133,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         validate_password_match(attrs['new_password'], attrs['new_password2'])
         return attrs
 
-    def validate_old_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise ValidationError({"old_password": "The old password is incorrect."})
-        return value
 #-------------------------------------------------------------------------------------------------------------------------
 class UserIdSerializer(serializers.Serializer):
     user_id = serializers.UUIDField(required=True)
