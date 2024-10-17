@@ -119,6 +119,18 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 # To change a password programmatically, use set_password() (takes care of the password hashing.)
 # Django also provides views and forms that may be used to allow users to change their own passwords.
 # Changing a user’s password will log out all their sessions.
+# Les vues fournies par défaut avec Django pour le changement de mot de passe
+# mettent à jour la session avec la valeur de hachage du nouveau mot de passe
+# pour que l’utilisateur qui change son mot de passe ne soit pas déconnecté.
+# Si vous avez une vue personnalisée pour le changement de mot de passe et
+# que vous souhaitez avoir un comportement similaire, utilisez la fonction update_session_auth_hash().
+# Cette fonction accepte en entrée la requête actuelle ainsi que l’objet utilisateur mis à jour
+# et à partir duquel la nouvelle valeur de hachage de la session sera calculée ;
+# elle met à jour la valeur de hachage de la session.
+# Elle se charge aussi d’alterner la clé de session afin qu’un cookie de session volé soit invalidé
+
+from django.contrib.auth import update_session_auth_hash
+
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
@@ -138,7 +150,7 @@ class ChangePasswordView(generics.UpdateAPIView):
         current_user.set_password(serializer.validated_data['new_password'])
         current_user.save()
 
-        password_changed(serializer.data.get("new_password"), user=current_user)
+        update_session_auth_hash(request, current_user)
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 
