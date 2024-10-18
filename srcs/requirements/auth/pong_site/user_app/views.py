@@ -233,7 +233,7 @@ class VerifyUserLoginView(APIView):
             elif not user.check_password(serializer.validated_data['password']):
                 return Response({"error": "Incorrect password."}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"username": f"{user.username}"}, status=status.HTTP_200_OK)
+                return Response({"username": f"{user.username}", "id": f"{user.id}"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
