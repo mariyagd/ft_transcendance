@@ -83,9 +83,11 @@ class StartGameSessionSerializer(serializers.Serializer):
                 raise ValidationError({"error": "Brick breaker and versus modes require two winners for a 4 players game"})
             elif len(players) != 4 and winner2:
                 raise ValidationError({"error": "Two winners are only allowed in a 4 players game"})
-            elif winner1 == winner2:
+            elif len(players) != 4 and not winner2:
+                return attrs
+            elif winner2 and winner1 == winner2:
                 raise ValidationError({"error": "Duplicate winners are not allowed"})
-            elif winner2 not in unique_aliases:
+            elif winner2 and winner2 not in unique_aliases:
                 raise ValidationError({"error": "Second winner must be one of the players"})
             else:
                 return attrs
