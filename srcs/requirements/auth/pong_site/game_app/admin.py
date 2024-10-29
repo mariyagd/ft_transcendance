@@ -6,6 +6,7 @@ class GameSessionAdmin(admin.ModelAdmin):
     list_display = ['mode', 'start_date', 'end_date', 'game_duration', 'numbers_of_players']
     list_filter = ['mode', 'end_date', 'numbers_of_players']
     search_fields = ['numbers_of_players', 'mode']
+    search_help_text = "Search by mode or number of players"
     ordering = ['-end_date']
     class Meta:
         model = GameSession
@@ -16,6 +17,7 @@ class GamePlayerProfileAdmin(admin.ModelAdmin):
     list_display = ['get_session_id', 'get_session_mode', 'date_played', 'get_user', 'get_alias', 'win']
     list_filter = ['session__mode', 'win']
     search_fields = ['user__username', 'alias']
+    search_help_text = "Search by username or alias"
     empty_value_display = "-"
     ordering = ['-date_played', 'session__id']
     class Meta:
@@ -45,6 +47,7 @@ class TournamentPlayerProfileAdmin(admin.ModelAdmin):
     list_filter = ['win']
     empty_value_display = "-"
     search_fields = ['user__username', 'alias']
+    search_help_text = "Search by username or alias"
     ordering = ['-date_played', 'session__id']
     class Meta:
         model = TournamentPlayerProfile
