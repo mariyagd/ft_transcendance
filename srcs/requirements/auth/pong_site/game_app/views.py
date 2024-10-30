@@ -260,36 +260,36 @@ class OtherUserMatchHistoryView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 # ----------------------------------------------------------------------------------------------------------------------
-class ShowAllGamesView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    def get(self, request, *args, **kwargs):
-
-        match_history = []
-        players = GamePlayerProfile.objects.all()
-        for player in players:
-            if player.session.numbers_of_players == 4 and (player.session.mode == 'VS' or player.session.mode == 'BB'):
-                if player.win:
-                    teammate = GamePlayerProfile.objects.filter(session=player.session, win=True).exclude(id=player.id).first()
-                else:
-                    teammate = GamePlayerProfile.objects.filter(session=player.session, win=False).exclude(id=player.id).first()
-                match_history.append(
-                    {
-                        "mode": player.session.mode,
-                        "date_played": localtime(player.date_played).strftime('%d %b %Y %H:%M:%S'),
-                        "duration": format_duration(player.session.game_duration),
-                        "number_of_players": player.session.numbers_of_players,
-                        "teammate" : teammate.alias if teammate.alias else teammate.user.username,
-                        "result": "win" if player.win else "lost"
-                    }
-                )
-            else:
-                match_history.append(
-                    {
-                        "mode": player.session.mode,
-                        "date_played": localtime(player.date_played).strftime('%d %b %Y %H:%M:%S'),
-                        "duration": format_duration(player.session.game_duration),
-                        "number_of_players": player.session.numbers_of_players,
-                        "result": "win" if player.win else "lost"
-                    }
-                )
-        return Response(match_history, status=status.HTTP_200_OK)
+#class ShowAllGamesView(generics.ListAPIView):
+#    permission_classes = [AllowAny]
+#    def get(self, request, *args, **kwargs):
+#
+#        match_history = []
+#        players = GamePlayerProfile.objects.all()
+#        for player in players:
+#            if player.session.numbers_of_players == 4 and (player.session.mode == 'VS' or player.session.mode == 'BB'):
+#                if player.win:
+#                    teammate = GamePlayerProfile.objects.filter(session=player.session, win=True).exclude(id=player.id).first()
+#                else:
+#                    teammate = GamePlayerProfile.objects.filter(session=player.session, win=False).exclude(id=player.id).first()
+#                match_history.append(
+#                    {
+#                        "mode": player.session.mode,
+#                        "date_played": localtime(player.date_played).strftime('%d %b %Y %H:%M:%S'),
+#                        "duration": format_duration(player.session.game_duration),
+#                        "number_of_players": player.session.numbers_of_players,
+#                        "teammate" : teammate.alias if teammate.alias else teammate.user.username,
+#                        "result": "win" if player.win else "lost"
+#                    }
+#                )
+#            else:
+#                match_history.append(
+#                    {
+#                        "mode": player.session.mode,
+#                        "date_played": localtime(player.date_played).strftime('%d %b %Y %H:%M:%S'),
+#                        "duration": format_duration(player.session.game_duration),
+#                        "number_of_players": player.session.numbers_of_players,
+#                        "result": "win" if player.win else "lost"
+#                    }
+#                )
+#        return Response(match_history, status=status.HTTP_200_OK)
