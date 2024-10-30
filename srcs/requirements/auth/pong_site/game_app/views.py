@@ -44,8 +44,6 @@ def get_user_stats(user):
     game_player_profiles = GamePlayerProfile.objects.filter(user=user)
     tournament_player_profiles = TournamentPlayerProfile.objects.filter(user=user)
 
-    # Combine two query sets from two different module into one
-
     result['total_played'] = game_player_profiles.count() + tournament_player_profiles.count()
     result['total_wins']  = game_player_profiles.filter(win=True).count() + tournament_player_profiles.filter(win=True).count()
 
@@ -143,6 +141,7 @@ class BaseRegisterSessionView(generics.CreateAPIView):
 
     def register_players(self, session, players, winner1, winner2):
         raise NotImplementedError
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 class RegisterGameSessionView(BaseRegisterSessionView):
@@ -155,7 +154,8 @@ class RegisterGameSessionView(BaseRegisterSessionView):
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 user = None
-            if player['alias'] == winner1 or (winner2 and player['alias'] == winner2):
+            if (player['alias'] == winner1 or (winner2 and player['alias'] == winner2)) or \
+                    (user and (user.username == winner1 or (winner2 and user.username == winner2))):
                 GamePlayerProfile.objects.create(alias=player['alias'], session=session, user=user, win=True)
             else:
                 GamePlayerProfile.objects.create(alias=player['alias'], session=session, user=user)
@@ -228,6 +228,7 @@ class CurrentUserMatchHistoryView(generics.RetrieveAPIView):
 
         match_history = get_user_match_history(current_user)
         return Response(match_history, status=status.HTTP_200_OK)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 class OtherUserMatchHistoryView(APIView):
