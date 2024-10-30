@@ -1,12 +1,11 @@
 from datetime import datetime
-
-from django.db.models.expressions import result
+from django.utils.timezone import localtime
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import generics, settings
 from rest_framework.views import APIView
 from .models import GameSession, GamePlayerProfile, TournamentPlayerProfile
-from .serializers import RegisterGameSessionSerializer, RegisterTournamentSessionSerializer , UserIdSerializer
+from .serializers import RegisterGameSessionSerializer, RegisterTournamentSessionSerializer, UserIdSerializer, logger
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from friends_app.models import FriendRequest
@@ -15,7 +14,6 @@ from friends_app.views import are_friends
 from itertools import chain
 
 User = get_user_model()
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 def format_duration(duration):
@@ -74,7 +72,7 @@ def get_user_match_history(user):
             match_history.append(
                 {
                     "mode": player.session.mode,
-                    "date_played": player.session.start_date.strftime('%d %b %Y'),
+                    "date_played": player.session.start_date.strftime('%d %b %Y %H:%M:%S'),
                     "duration": format_duration(player.session.game_duration),
                     "number_of_players": player.session.numbers_of_players,
                     "teammate" : teammate.alias if teammate.alias else teammate.user.username,
@@ -85,7 +83,7 @@ def get_user_match_history(user):
             match_history.append(
                 {
                     "mode": player.session.mode,
-                    "date_played": player.session.start_date.strftime('%d %b %Y'),
+                    "date_played": player.session.start_date.strftime('%d %b %Y %H:%M:%S'),
                     "duration": format_duration(player.session.game_duration),
                     "number_of_players": player.session.numbers_of_players,
                     "result": "win" if player.win else "lost"
@@ -96,7 +94,7 @@ def get_user_match_history(user):
         match_history.append(
             {
                 "mode": "TN",
-                "date_played": player.session.start_date.strftime('%d %b %Y'),
+                "date_played": player.session.start_date.strftime('%d %b %Y %H:%M:%S'),
                 "duration": format_duration(player.session.game_duration),
                 "number_of_players": player.session.numbers_of_players,
                 "display_name": player.alias,
@@ -127,6 +125,7 @@ class BaseRegisterSessionView(generics.CreateAPIView):
             if start_date > end_date:
                 return Response({"error": "Invalid date format. Start date is in the future."}, status=status.HTTP_400_BAD_REQUEST)
             diff = end_date - start_date
+            logger.info(f"start_date: {start_date}, end_date: {end_date}, diff: {diff}")
         except ValueError:
             return Response({"error": "Invalid date format. Please use 'dd/mm/yyyy HH:MM:SS'"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -154,11 +153,11 @@ class RegisterGameSessionView(BaseRegisterSessionView):
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 user = None
-            if (player['alias'] == winner1 or (winner2 and player['alias'] == winner2)) or \
-                    (user and (user.username == winner1 or (winner2 and user.username == winner2))):
-                GamePlayerProfile.objects.create(alias=player['alias'], session=session, user=user, win=True)
-            else:
-                GamePlayerProfile.objects.create(alias=player['alias'], session=session, user=user)
+
+            display_name = user.username if user else player['alias']
+            is_winner = bool(display_name == winner1 or (winner2 and display_name == winner2))
+
+            GamePlayerProfile.objects.create(alias=player['alias'], session=session, user=user, date_played=localtime(session.start_date, settings.TIME_ZONE), win=is_winner)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -172,10 +171,9 @@ class RegisterTournamentSessionView(BaseRegisterSessionView):
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 user = None
-            if player['alias'] == winner1:
-                TournamentPlayerProfile.objects.create(alias=player['alias'], session=session, user=user, win=True)
-            else:
-                TournamentPlayerProfile.objects.create(alias=player['alias'], session=session, user=user)
+
+            is_winner = bool(player['alias'] == winner1)
+            TournamentPlayerProfile.objects.create(alias=player['alias'], session=session, user=user, date_played=localtime(session.start_date, settings.TIME_ZONE), win=is_winner)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
